@@ -1,3 +1,33 @@
+<!-- gen:header -->
+<p align="center"><img src=".github/cover.svg" alt="Guitarineh Bot" width="100%"></p>
+
+<h1 align="center">Guitarineh Bot</h1>
+<p align="center"><b>ربات فروش آکورد و پکیج PDF با پنل مدیریت و فایل رمزگذاری‌شده</b><br><i>Telegram store bot for chord PDFs with web admin & watermarking</i></p>
+<p align="center"><img alt="Python" src="https://img.shields.io/badge/-Python-f97316?style=for-the-badge"> <img alt="aiogram" src="https://img.shields.io/badge/-aiogram-f97316?style=for-the-badge"> <img alt="Flask" src="https://img.shields.io/badge/-Flask-f97316?style=for-the-badge"> <img alt="SQLite" src="https://img.shields.io/badge/-SQLite-f97316?style=for-the-badge"></p>
+
+<div dir="rtl">
+
+## ✨ امکانات
+
+- سفارش، سبد و پرداخت کارت‌به‌کارت
+- پنل وب برای تأیید فیش و مدیریت محصول
+- ارسال PDF رمزگذاری‌شده با واترمارک
+
+</div>
+
+## 🚀 Quick start
+
+```bash
+pip install -r requirements.txt
+copy .env.example .env
+python run.py
+```
+
+---
+
+<!-- gen:docs -->
+## 📚 مستندات کامل · Full documentation
+
 # Guitarineh — ربات تلگرام گیتارینه (آفلاین + رمزگذاری)
 
 **نام برند:** guitarineh  
@@ -120,3 +150,8 @@ bot/            # ربات تلگرام (کاربران)
 web/            # پنل مدیریت FastAPI
 run.py          # اجرای همزمان ربات + پنل
 ```
+
+---
+
+<p align="center">ساخته‌شده توسط <a href="https://mahsen81.ir"><b>محسن جباره‌اصل</b></a> — برنامه‌نویسی، طراحی سایت، ربات و هوش مصنوعی<br>
+Built by <a href="https://mahsen81.ir">Mohsen Jabbareh-Asl</a> · ⭐ اگر مفید بود، ستاره بدهید · Need a custom version? <a href="https://mahsen81.ir">Get in touch</a></p>
