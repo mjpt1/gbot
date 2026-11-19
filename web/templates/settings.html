@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}تنظیمات{% endblock %}
+{% block page_title %}تنظیمات{% endblock %}
+{% block page_subtitle %}مدیریت منوی ربات، پرداخت، پیام‌ها، لوگو و امنیت پنل{% endblock %}
+{% block content %}
+{% set ok = request.query_params.get('ok') %}
+{% set err = request.query_params.get('err') %}
+
+{% if ok == 'password' %}
+<div class="alert alert-ok"><i data-lucide="key-round"></i><span>رمز عبور عوض شد. دستگاه‌های دیگر از حساب خارج شدند.</span></div>
+{% elif ok == 'menu_deleted' %}
+<div class="alert alert-ok"><i data-lucide="circle-check-big"></i><span>دکمه از منوی ربات حذف شد.</span></div>
+{% elif ok == 'menu_order' %}
+<div class="alert alert-ok"><i data-lucide="circle-check-big"></i><span>ترتیب دکمه‌های منو تغییر کرد.</span></div>
+{% elif ok %}
+<div class="alert alert-ok"><i data-lucide="circle-check-big"></i><span>تغییرات ذخیره شد.</span></div>
+{% elif err == 'pw_current' %}
+<div class="alert alert-error"><span>⚠️</span><span>رمز فعلی درست نیست.</span></div>
+{% elif err == 'pw_short' %}
+<div class="alert alert-error"><span>⚠️</span><span>رمز جدید باید حداقل {{ min_password_length }} کاراکتر باشد.</span></div>
+{% elif err == 'pw_mismatch' %}
+<div class="alert alert-error"><span>⚠️</span><span>رمز جدید و تکرار آن یکسان نیستند.</span></div>
+{% elif err == 'logo' %}
+<div class="alert alert-error"><span>⚠️</span><span>فایل لوگو نامعتبر است.</span></div>
+{% elif err == 'payment' %}
+<div class="alert alert-error"><span>⚠️</span><span>شماره کارت باید ۱۶ رقم باشد.</span></div>
+{% elif err == 'menu_item' %}
+<div class="alert alert-error"><i data-lucide="triangle-alert"></i><span>عنوان و نوع دکمه را بررسی کنید. پیام سفارشی باید متن پاسخ داشته باشد.</span></div>
+{% elif err == 'menu_duplicate' %}
+<div class="alert alert-error"><i data-lucide="copy-x"></i><span>عنوان دکمه تکراری است یا تعداد دکمه‌ها به سقف ۱۰ مورد رسیده.</span></div>
+{% elif err == 'menu_last' %}
+<div class="alert alert-error"><i data-lucide="shield-alert"></i><span>حداقل یک دکمه باید در منوی ربات باقی بماند.</span></div>
+{% elif err == 'menu_missing' %}
+<div class="alert alert-error"><i data-lucide="search-x"></i><span>دکمه موردنظر پیدا نشد.</span></div>
+{% elif err %}
+<div class="alert alert-error"><span>⚠️</span><span>ذخیره نشد.</span></div>
+{% endif %}
+
+<section class="card">
+  <div class="card-head">
+    <div><h2>منوی اصلی ربات</h2><p>دکمه‌های کیبورد اصلی کاربر را اضافه، ویرایش، حذف یا مرتب کنید.</p></div>
+    <span class="badge">{{ menu_items|length }} از ۱۰</span>
+  </div>
+  <div class="stack">
+    {% for item in menu_items %}
+    <article class="menu-item">
+      <div class="menu-index">{{ loop.index }}</div>
+      <div><b>{{ item.label }}</b><p class="field-hint">{{ menu_actions.get(item.action, item.action) }}{% if item.response_text %} · {{ item.response_text|truncate(80) }}{% endif %}</p></div>
+      <div class="menu-item-actions">
+        <form method="post" action="{{ base }}/settings/menu-items/{{ item.id }}/move"><input type="hidden" name="direction" value="up"><button class="btn btn-ghost btn-icon btn-sm" type="submit" aria-label="انتقال به بالا" title="انتقال به بالا" {% if loop.first %}disabled{% endif %}><i data-lucide="arrow-up"></i></button></form>
+        <form method="post" action="{{ base }}/settings/menu-items/{{ item.id }}/move"><input type="hidden" name="direction" value="down"><button class="btn btn-ghost btn-icon btn-sm" type="submit" aria-label="انتقال به پایین" title="انتقال به پایین" {% if loop.last %}disabled{% endif %}><i data-lucide="arrow-down"></i></button></form>
+        <form method="post" action="{{ base }}/settings/menu-items/{{ item.id }}/delete"><button class="btn btn-danger btn-icon btn-sm" type="submit" aria-label="حذف" title="حذف" onclick="return confirm('دکمه «{{ item.label }}» از منوی ربات حذف شود؟')"><i data-lucide="trash-2"></i></button></form>
+      </div>
+      <details class="menu-edit">
+        <summary class="btn btn-ghost btn-sm"><i data-lucide="pencil"></i>ویرایش این دکمه</summary>
+        <form method="post" action="{{ base }}/settings/menu-items/{{ item.id }}/edit" class="form form-grid" style="margin-top:12px">
+          <div class="field"><label>عنوان دکمه</label><input type="text" name="label" value="{{ item.label }}" maxlength="64" required></div>
+          <div class="field"><label>عملکرد</label><select name="action" data-menu-action>{% for action, label in menu_actions.items() %}<option value="{{ action }}" {% if item.action == action %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+          <div class="field full" data-message-field {% if item.action != message_action %}hidden{% endif %}><label>متن پاسخ</label><textarea name="response_text" maxlength="4000">{{ item.response_text }}</textarea></div>
+          <div class="form-actions full"><button class="btn btn-primary btn-sm" type="submit"><i data-lucide="save"></i>ذخیره ویرایش</button></div>
+        </form>
+      </details>
+    </article>
+    {% endfor %}
+  </div>
+  {% if menu_items|length < 10 %}
+  <div class="soft-panel" style="margin-top:16px">
+    <div class="card-head"><div><h2>افزودن دکمه</h2><p>عملکرد آماده انتخاب کنید یا یک پیام سفارشی بسازید.</p></div><div class="icon-box tone-gold"><i data-lucide="plus"></i></div></div>
+    <form method="post" action="{{ base }}/settings/menu-items" class="form form-grid">
+      <div class="field"><label for="menu-label">عنوان دکمه</label><input id="menu-label" type="text" name="label" maxlength="64" placeholder="مثلاً: ارتباط با پشتیبانی" required></div>
+      <div class="field"><label for="menu-action">عملکرد</label><select id="menu-action" name="action" data-menu-action>{% for action, label in menu_actions.items() %}<option value="{{ action }}">{{ label }}</option>{% endfor %}</select></div>
+      <div class="field full" data-message-field hidden><label for="menu-response">متن پاسخ سفارشی</label><textarea id="menu-response" name="response_text" maxlength="4000" placeholder="متنی که با لمس دکمه برای کاربر فرستاده می‌شود"></textarea></div>
+      <div class="form-actions full"><button type="submit" class="btn btn-primary"><i data-lucide="plus"></i>افزودن به منو</button></div>
+    </form>
+  </div>
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <div><h2>امنیت حساب پنل</h2><p>تغییر رمز، نشست دستگاه‌های دیگر را منقضی می‌کند.</p></div>
+    <span class="badge">نام کاربری: <code>{{ admin_user }}</code></span>
+  </div>
+  <form method="post" action="{{ base }}/settings/password" class="form form-grid">
+    <div class="field full"><label for="pw-current">رمز فعلی</label><input id="pw-current" type="password" name="current_password" required autocomplete="current-password"></div>
+    <div class="field"><label for="pw-new">رمز جدید</label><input id="pw-new" type="password" name="new_password" required minlength="{{ min_password_length }}" autocomplete="new-password"></div>
+    <div class="field"><label for="pw-confirm">تکرار رمز جدید</label><input id="pw-confirm" type="password" name="confirm_password" required minlength="{{ min_password_length }}" autocomplete="new-password"></div>
+    <p class="field-hint full">حداقل {{ min_password_length }} کاراکتر. بعد از تغییر، همین دستگاه وارد می‌ماند ولی بقیه دستگاه‌ها باید دوباره وارد شوند.</p>
+    <div class="full form-actions"><button type="submit" class="btn btn-primary"><i data-lucide="key-round"></i>تغییر رمز</button></div>
+  </form>
+</section>
+
+<div class="settings-grid">
+  <section class="card">
+    <div class="card-head"><div><h2>اطلاعات پرداخت</h2><p>نمایش در مرحله کارت‌به‌کارت</p></div><div class="icon-box tone-green"><i data-lucide="credit-card"></i></div></div>
+    <form method="post" action="{{ base }}/settings/payment" class="form">
+      <label for="card">شماره کارت</label>
+      <input id="card" type="text" name="bank_card" value="{{ payment.bank_card }}" dir="ltr" inputmode="numeric" required>
+      <label for="holder">نام صاحب کارت</label>
+      <input id="holder" type="text" name="bank_card_holder" value="{{ payment.bank_card_holder }}">
+      <p class="field-hint">این اطلاعات هنگام پرداخت به مشتری نشان داده می‌شود.</p>
+      <div class="form-actions"><button type="submit" class="btn btn-primary"><i data-lucide="save"></i>ذخیره</button></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><div><h2>لوگوی ربات</h2><p>تصویر بالای پیام خوش‌آمد</p></div><div class="icon-box tone-blue"><i data-lucide="image"></i></div></div>
+    {% if has_logo %}<div class="logo-preview"><img src="{{ base }}/settings/logo/preview" alt="لوگوی فعلی"></div>{% else %}<p class="field-hint">هنوز لوگویی ثبت نشده.</p>{% endif %}
+    <form method="post" action="{{ base }}/settings/logo" enctype="multipart/form-data" class="form">
+      <input type="file" name="logo" accept="image/*" {% if not has_logo %}required{% endif %}>
+      <div class="form-actions"><button type="submit" class="btn btn-primary"><i data-lucide="upload"></i>{% if has_logo %}تغییر لوگو{% else %}آپلود لوگو{% endif %}</button>{% if has_logo %}<button type="submit" class="btn btn-danger btn-sm" formaction="{{ base }}/settings/logo/remove" formenctype="application/x-www-form-urlencoded" onclick="return confirm('لوگو حذف شود؟')"><i data-lucide="trash-2"></i>حذف لوگو</button>{% endif %}</div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><div><h2>پیام خوش‌آمد</h2><p>اولین پیام پس از اجرای /start</p></div><div class="icon-box tone-purple"><i data-lucide="message-square-text"></i></div></div>
+    <form method="post" action="{{ base }}/settings/welcome" class="form"><textarea name="welcome_text" rows="6">{{ brand.welcome_text }}</textarea><div class="form-actions"><button type="submit" class="btn btn-primary"><i data-lucide="save"></i>ذخیره</button></div></form>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><div><h2>پیام فهرست محصولات</h2><p>متن بالای محصولات قابل خرید</p></div><div class="icon-box tone-gold"><i data-lucide="list-music"></i></div></div>
+    <form method="post" action="{{ base }}/settings/menu" class="form"><textarea name="menu_text" rows="4">{{ brand.menu_text }}</textarea><div class="form-actions"><button type="submit" class="btn btn-primary"><i data-lucide="save"></i>ذخیره</button></div></form>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  (function () {
+    var messageAction = {{ message_action | tojson }};
+    document.querySelectorAll('[data-menu-action]').forEach(function (select) {
+      var form = select.closest('form');
+      var field = form ? form.querySelector('[data-message-field]') : null;
+      if (!field) return;
+      function sync() { field.hidden = select.value !== messageAction; }
+      select.addEventListener('change', sync);
+      sync();
+    });
+  })();
+</script>
+{% endblock %}

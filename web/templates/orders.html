@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}سفارش‌ها{% endblock %}
+{% block page_title %}سفارش‌ها و فیش‌ها{% endblock %}
+{% block page_subtitle %}بررسی پرداخت، تأیید سفارش و ارسال امن PDF{% endblock %}
+{% block content %}
+{% if request.query_params.get('msg') %}
+<div class="alert {% if request.query_params.get('msg') == 'ok' %}alert-ok{% else %}alert-error{% endif %}">
+  <i data-lucide="{% if request.query_params.get('msg') == 'ok' %}circle-check-big{% else %}triangle-alert{% endif %}"></i>
+  <span>{{ request.query_params.get('t', '') }}</span>
+</div>
+{% endif %}
+
+<section class="card">
+  <div class="card-head">
+    <div><h2>فیش‌های در انتظار تأیید</h2><p>پیش از تأیید، تصویر رسید و اطلاعات مشتری را بررسی کنید.</p></div>
+    <span class="badge {% if pending_orders %}badge-warn{% else %}badge-ok{% endif %}">
+      {{ pending_orders|length }} مورد
+    </span>
+  </div>
+
+  <div class="order-list">
+  {% for order in pending_orders %}
+  <article class="order-card">
+    <div class="order-top">
+      <div>
+        <div class="order-title"><h3><code>{{ order.tracking_code }}</code></h3><span class="badge badge-warn">در انتظار بررسی</span></div>
+        <div class="order-lines">
+          <div><span>نام مشتری:</span> {{ order.full_name or '—' }}</div>
+          <div><span>شماره تماس:</span> <b dir="ltr">{{ order.phone or '—' }}</b></div>
+          <div><span>شناسه تلگرام:</span> <b dir="ltr">{{ order.user_id }}</b></div>
+          <div><span>مبلغ:</span> <b>{{ format_toman(order.total) }}</b></div>
+        </div>
+        <ul class="items">
+          {% for item in order.order_items %}
+          <li>{{ item.title }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% if order.receipt and order.receipt.local_path %}
+      <a href="{{ base }}/receipts/{{ order.id }}" target="_blank" rel="noopener"
+         class="receipt-thumb" title="بازکردن فیش در اندازه کامل">
+        <img src="{{ base }}/receipts/{{ order.id }}" alt="فیش پرداخت">
+      </a>
+      {% else %}
+      <span class="badge badge-danger">بدون فیش</span>
+      {% endif %}
+    </div>
+    <div class="order-actions">
+      <form method="post" action="{{ base }}/orders/{{ order.id }}/approve">
+        <button type="submit" class="btn btn-ok"
+                onclick="return confirm('سفارش تأیید و فایل PDF برای مشتری ارسال شود؟')">
+          <i data-lucide="send"></i>تأیید و ارسال PDF
+        </button>
+      </form>
+      <form method="post" action="{{ base }}/orders/{{ order.id }}/reject">
+        <button type="submit" class="btn btn-danger"
+                onclick="return confirm('این سفارش رد شود؟')">
+          <i data-lucide="x"></i>رد سفارش
+        </button>
+      </form>
+    </div>
+  </article>
+  {% else %}
+  <p class="empty">فیش معلقی نیست؛ همه سفارش‌ها رسیدگی شده‌اند.</p>
+  {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <div><h2>تاریخچه سفارش‌ها</h2><p>جستجو و فیلتر در ۵۰ سفارش اخیر</p></div>
+    <span class="badge">۵۰ سفارش اخیر</span>
+  </div>
+
+  <div class="toolbar">
+    <input type="search" id="order-search" placeholder="جستجو در کد پیگیری، نام یا شماره…"
+           aria-label="جستجوی سفارش">
+    <select id="order-status" aria-label="فیلتر وضعیت">
+      <option value="">همه وضعیت‌ها</option>
+      {% for key, label in status_fa.items() %}
+      <option value="{{ label }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table id="orders-table">
+      <thead>
+        <tr>
+          <th>کد پیگیری</th>
+          <th>مشتری</th>
+          <th>مبلغ</th>
+          <th>وضعیت</th>
+          <th>تاریخ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in all_orders %}
+        <tr>
+          <td><code>{{ o.tracking_code }}</code></td>
+          <td>{{ o.full_name or o.phone or '—' }}</td>
+          <td class="nowrap">{{ format_toman(o.total) }}</td>
+          <td>
+            <span class="badge {{ status_class.get(o.status, '') }}">
+              {{ status_fa.get(o.status, o.status) }}
+            </span>
+          </td>
+          <td class="muted nowrap">{{ o.created_at }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">سفارشی ثبت نشده.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="field-hint" id="order-count" hidden></p>
+</section>
+
+<script>
+  // Client-side filtering of the history table — no extra round-trip.
+  (function () {
+    var search = document.getElementById('order-search');
+    var status = document.getElementById('order-status');
+    var rows = document.querySelectorAll('#orders-table tbody tr');
+    var counter = document.getElementById('order-count');
+
+    function apply() {
+      var q = search.value.trim().toLowerCase();
+      var s = status.value;
+      var shown = 0;
+      rows.forEach(function (row) {
+        if (row.querySelector('.empty')) return;
+        var text = row.textContent.toLowerCase();
+        var badge = row.querySelector('.badge');
+        var okText = !q || text.indexOf(q) !== -1;
+        var okStatus = !s || (badge && badge.textContent.trim() === s);
+        var visible = okText && okStatus;
+        row.hidden = !visible;
+        if (visible) shown++;
+      });
+      counter.hidden = (!q && !s);
+      counter.textContent = shown + ' سفارش نمایش داده می‌شود.';
+    }
+
+    search.addEventListener('input', apply);
+    status.addEventListener('change', apply);
+  })();
+</script>
+{% endblock %}

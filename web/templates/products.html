@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}محصولات{% endblock %}
+{% block page_title %}محصولات و PDF{% endblock %}
+{% block page_subtitle %}افزودن فایل، قیمت‌گذاری و مدیریت محصولات ربات{% endblock %}
+{% block content %}
+{% if request.query_params.get('ok') %}
+<div class="alert alert-ok"><i data-lucide="circle-check-big"></i><span>محصول اضافه شد.</span></div>
+{% elif request.query_params.get('deactivated') %}
+<div class="alert alert-ok"><i data-lucide="circle-check-big"></i><span>محصول غیرفعال شد و دیگر در ربات نمایش داده نمی‌شود.</span></div>
+{% elif request.query_params.get('err') == 'pdf' %}
+<div class="alert alert-error"><i data-lucide="triangle-alert"></i><span>فقط فایل PDF قابل قبول است.</span></div>
+{% elif request.query_params.get('err') == 'locked' %}
+<div class="alert alert-error">
+  <i data-lucide="lock-keyhole"></i>
+  <span>
+    این فایل PDF خودش رمز دارد و ربات نمی‌تواند بازش کند تا واترمارک بزند و
+    برای مشتری رمزگذاری کند. نسخه‌ی <b>بدون رمز</b> را آپلود کنید.
+  </span>
+</div>
+{% elif request.query_params.get('err') == 'corrupt' %}
+<div class="alert alert-error">
+  <i data-lucide="triangle-alert"></i>
+  <span>این فایل قابل خواندن نیست یا PDF سالمی نیست. فایل دیگری را امتحان کنید.</span>
+</div>
+{% elif request.query_params.get('err') %}
+<div class="alert alert-error"><i data-lucide="triangle-alert"></i><span>عنوان یا قیمت نامعتبر است.</span></div>
+{% endif %}
+
+<section class="card">
+  <div class="card-head">
+    <div><h2>افزودن محصول</h2><p>PDF در زمان تحویل برای هر مشتری واترمارک و رمزگذاری می‌شود.</p></div>
+    <div class="icon-box tone-gold"><i data-lucide="file-plus-2"></i></div>
+  </div>
+  <form method="post" action="{{ base }}/products" enctype="multipart/form-data" class="form form-grid">
+    <div class="field">
+      <label for="p-title">عنوان</label>
+      <input id="p-title" type="text" name="title" required minlength="2"
+             placeholder="مثلاً: پکیج آکوردهای پاپ">
+    </div>
+    <div class="field">
+      <label for="p-price">قیمت (تومان)</label>
+      <input id="p-price" type="text" name="price" required inputmode="numeric" placeholder="150000">
+    </div>
+    <div class="field full">
+      <label for="p-pdf">فایل PDF</label>
+      <input id="p-pdf" type="file" name="pdf" accept=".pdf,application/pdf" required>
+    </div>
+    <div class="full form-actions">
+      <button type="submit" class="btn btn-primary"><i data-lucide="upload"></i>ذخیره محصول</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <div><h2>فهرست محصولات</h2><p>محصولات فعال و آرشیوشده فروشگاه</p></div>
+    <span class="badge">{{ products|length }} مورد</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>عنوان</th>
+          <th>قیمت</th>
+          <th>وضعیت</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td class="muted">{{ p.id }}</td>
+          <td>{{ p.title }}</td>
+          <td class="nowrap">{{ format_toman(p.price) }}</td>
+          <td>
+            {% if p.active %}
+            <span class="badge badge-ok">فعال</span>
+            {% else %}
+            <span class="badge">غیرفعال</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if p.active %}
+            <form method="post" action="{{ base }}/products/{{ p.id }}/deactivate">
+              <button type="submit" class="btn btn-sm btn-danger"
+                      onclick="return confirm('«{{ p.title }}» غیرفعال شود؟ از فهرست ربات حذف می‌شود.')">
+                <i data-lucide="archive"></i>غیرفعال کردن
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">هنوز محصولی اضافه نشده.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

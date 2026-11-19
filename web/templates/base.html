@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="color-scheme" content="dark">
+  <title>{% block title %}گیتارینه{% endblock %} · پنل مدیریت</title>
+  <link rel="icon" type="image/png" href="{{ base }}/static/guitarineh-logo.png">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+  <link rel="stylesheet" href="{{ base }}/static/admin-v2.css">
+  {% block head %}{% endblock %}
+</head>
+<body>
+{% if path == '/login' %}
+  {% block content %}{% endblock %}
+{% else %}
+  <div class="app-shell">
+    <div class="mobile-backdrop" data-close-nav></div>
+    <aside class="sidebar" aria-label="ناوبری اصلی">
+      <div class="sidebar-head">
+        <a class="brand" href="{{ base }}/">
+          <img class="brand-logo" src="{{ base }}/static/guitarineh-logo.png" alt="لوگوی گیتارینه">
+          <span><strong>گیتارینه</strong><small>پنل مدیریت سفارشات</small></span>
+        </a>
+        <div class="system-card">
+          <div class="system-row"><span>وضعیت سیستم</span><b>آنلاین</b></div>
+          <div class="system-track"><span></span></div>
+          <p>پردازش امن PDF و ارسال خودکار فعال است.</p>
+        </div>
+      </div>
+      <nav class="nav-list">
+        <a href="{{ base }}/" class="nav-link {% if path == '/' %}active{% endif %}"><i data-lucide="layout-dashboard"></i><span>داشبورد</span></a>
+        <a href="{{ base }}/orders" class="nav-link {% if path.startswith('/orders') %}active{% endif %}"><i data-lucide="inbox"></i><span>سفارش‌ها و فیش‌ها</span>{% if pending %}<span class="nav-badge">{{ pending }}</span>{% endif %}</a>
+        <a href="{{ base }}/customers" class="nav-link {% if path.startswith('/customers') %}active{% endif %}"><i data-lucide="users"></i><span>مشتری‌ها</span></a>
+        <a href="{{ base }}/products" class="nav-link {% if path.startswith('/products') %}active{% endif %}"><i data-lucide="file-music"></i><span>محصولات و PDF</span></a>
+        <a href="{{ base }}/analytics" class="nav-link {% if path.startswith('/analytics') %}active{% endif %}"><i data-lucide="chart-no-axes-combined"></i><span>تحلیل‌ها</span></a>
+        <a href="{{ base }}/settings" class="nav-link {% if path.startswith('/settings') %}active{% endif %}"><i data-lucide="settings-2"></i><span>تنظیمات</span></a>
+      </nav>
+      <div class="sidebar-foot">
+        <a href="{{ base }}/logout" class="nav-link logout-link"><i data-lucide="log-out"></i><span>خروج از حساب</span></a>
+      </div>
+    </aside>
+    <div class="main-area">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:11px;min-width:0">
+          <button type="button" class="btn btn-ghost btn-icon mobile-trigger" data-open-nav aria-label="باز کردن منو"><i data-lucide="menu"></i></button>
+          <div class="page-heading"><h1>{% block page_title %}پنل مدیریت{% endblock %}</h1><p>{% block page_subtitle %}مدیریت فروشگاه گیتارینه{% endblock %}</p></div>
+        </div>
+        <div class="admin-chip"><div class="admin-chip-text"><b>مدیر سیستم</b><span>دسترسی کامل</span></div><div class="admin-avatar">م</div></div>
+      </header>
+      <main class="page-content">{{ self.content() }}</main>
+    </div>
+  </div>
+{% endif %}
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<script>
+  if (window.lucide) window.lucide.createIcons();
+  document.querySelectorAll('[data-open-nav]').forEach(function (button) {
+    button.addEventListener('click', function () { document.body.classList.add('nav-open'); });
+  });
+  document.querySelectorAll('[data-close-nav], .sidebar .nav-link').forEach(function (element) {
+    element.addEventListener('click', function () { document.body.classList.remove('nav-open'); });
+  });
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

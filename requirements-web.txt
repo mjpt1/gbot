@@ -1,0 +1,17 @@
+# Web admin panel only (DirectAdmin / VPS)
+# Bot polling uses full requirements.txt
+
+fastapi>=0.115
+uvicorn[standard]>=0.32
+python-multipart>=0.0.12
+jinja2>=3.1
+itsdangerous>=2.2
+a2wsgi>=1.10
+python-dotenv>=1.0
+aiosqlite>=0.20
+
+# Needed for order approve/reject (PDF encryption + Telegram HTTP API)
+aiohttp>=3.10
+pikepdf>=9.0
+reportlab>=4.2
+Pillow>=10.0

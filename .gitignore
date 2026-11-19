@@ -1,0 +1,21 @@
+.env
+data/guitarine.db
+data/receipts/*
+data/protected/*
+!data/receipts/.gitkeep
+!data/protected/.gitkeep
+!data/products/.gitkeep
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# build outputs and runtime data
+*.zip
+data/*.db
+data/*.db-shm
+data/*.db-wal
+*.log

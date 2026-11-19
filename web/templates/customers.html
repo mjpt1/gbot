@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}مشتری‌ها{% endblock %}
+{% block page_title %}مشتری‌ها{% endblock %}
+{% block page_subtitle %}کاربران ربات، سابقه سفارش و مجموع خرید{% endblock %}
+{% block content %}
+<div class="kpi-grid">
+  <article class="kpi-card"><div class="kpi-top"><div><div class="kpi-label">مشتری ثبت‌شده</div><div class="kpi-value">{{ customers|length }}</div></div><div class="icon-box tone-blue"><i data-lucide="users"></i></div></div><div class="kpi-note">کاربران دارای حساب در ربات</div></article>
+  <article class="kpi-card"><div class="kpi-top"><div><div class="kpi-label">مجموع فروش موفق</div><div class="kpi-value">{{ "{:,}".format(total_spent) }}</div></div><div class="icon-box tone-green"><i data-lucide="wallet-cards"></i></div></div><div class="kpi-note">تومان · فقط سفارش‌های تحویل‌شده</div></article>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <div><h2>فهرست مشتری‌ها</h2><p>اطلاعات تماس و سابقه خرید کاربران</p></div>
+    <a href="{{ base }}/customers/export.csv" class="btn btn-ghost btn-sm"><i data-lucide="download"></i>خروجی اکسل</a>
+  </div>
+
+  <div class="toolbar">
+    <input type="search" id="cust-search" placeholder="جستجو در نام، شماره یا نام کاربری…"
+           aria-label="جستجوی مشتری">
+  </div>
+
+  <div class="table-wrap">
+    <table id="customers-table">
+      <thead>
+        <tr>
+          <th>نام</th>
+          <th>شماره موبایل</th>
+          <th>نام کاربری</th>
+          <th>سفارش</th>
+          <th>مجموع خرید</th>
+          <th>عضویت</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        <tr>
+          <td>{{ c.full_name or '—' }}</td>
+          <td class="nowrap"><code>{{ c.phone or '—' }}</code></td>
+          <td class="nowrap">{% if c.username %}<span dir="ltr">@{{ c.username }}</span>{% else %}—{% endif %}</td>
+          <td class="nowrap">
+            {{ c.delivered_count }} / {{ c.orders_count }}
+          </td>
+          <td class="nowrap">{{ format_toman(c.spent) }}</td>
+          <td class="muted nowrap">{{ c.created_at }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty">هنوز کاربری در ربات ثبت‌نام نکرده.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="field-hint">ستون سفارش: تحویل‌شده / کل. مجموع خرید فقط سفارش‌های تحویل‌شده را می‌شمارد.</p>
+  <p class="field-hint" id="cust-count" hidden></p>
+</section>
+
+<script>
+  (function () {
+    var search = document.getElementById('cust-search');
+    var rows = document.querySelectorAll('#customers-table tbody tr');
+    var counter = document.getElementById('cust-count');
+
+    search.addEventListener('input', function () {
+      var q = search.value.trim().toLowerCase();
+      var shown = 0;
+      rows.forEach(function (row) {
+        if (row.querySelector('.empty')) return;
+        var visible = !q || row.textContent.toLowerCase().indexOf(q) !== -1;
+        row.hidden = !visible;
+        if (visible) shown++;
+      });
+      counter.hidden = !q;
+      counter.textContent = shown + ' مشتری پیدا شد.';
+    });
+  })();
+</script>
+{% endblock %}

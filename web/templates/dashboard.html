@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}داشبورد{% endblock %}
+{% block page_title %}داشبورد{% endblock %}
+{% block page_subtitle %}نمای زنده فروش، سفارش‌ها و عملکرد ربات{% endblock %}
+{% block content %}
+<div class="kpi-grid">
+  <article class="kpi-card">
+    <div class="kpi-top"><div><div class="kpi-label">فیش‌های منتظر بررسی</div><div class="kpi-value">{{ pending }}</div></div><div class="icon-box tone-gold"><i data-lucide="receipt-text"></i></div></div>
+    <div class="kpi-note">نیازمند تأیید یا رد مدیر</div>
+  </article>
+  <article class="kpi-card">
+    <div class="kpi-top"><div><div class="kpi-label">فروش امروز</div><div class="kpi-value">{{ "{:,}".format(metrics.revenue_today) }}</div></div><div class="icon-box tone-green"><i data-lucide="badge-dollar-sign"></i></div></div>
+    <div class="kpi-note">تومان · سفارش‌های تحویل‌شده امروز</div>
+  </article>
+  <article class="kpi-card">
+    <div class="kpi-top"><div><div class="kpi-label">مشتری ثبت‌شده</div><div class="kpi-value">{{ users }}</div></div><div class="icon-box tone-blue"><i data-lucide="users"></i></div></div>
+    <div class="kpi-note">کاربران ثبت‌نام‌کرده در ربات</div>
+  </article>
+  <article class="kpi-card">
+    <div class="kpi-top"><div><div class="kpi-label">محصول فعال</div><div class="kpi-value">{{ products }}</div></div><div class="icon-box tone-purple"><i data-lucide="file-music"></i></div></div>
+    <div class="kpi-note">فایل‌های آماده فروش و تحویل</div>
+  </article>
+</div>
+
+{% if pending %}
+<div class="alert alert-info">
+  <i data-lucide="bell-ring"></i>
+  <span>{{ pending }} فیش منتظر بررسی است. <a href="{{ base }}/orders"><b>مشاهده سفارش‌ها</b></a></span>
+</div>
+{% endif %}
+
+<div class="grid-main">
+  <section class="card">
+    <div class="card-head">
+      <div><h2>روند سفارش‌های ۷ روز اخیر</h2><p>مقایسه تحویل موفق و سفارش ردشده</p></div>
+      <a href="{{ base }}/analytics" class="btn btn-ghost btn-sm"><i data-lucide="chart-no-axes-combined"></i>تحلیل کامل</a>
+    </div>
+    <div class="chart-box"><canvas id="activity-chart"></canvas></div>
+  </section>
+  <section class="card">
+    <div class="card-head"><div><h2>وضعیت سفارش‌ها</h2><p>خلاصه عملکرد ثبت‌شده</p></div></div>
+    <div class="stack">
+      <div class="soft-panel activity-item"><span class="activity-dot" style="background:#22c55e"></span><div><b>{{ metrics.delivered_total }} تحویل موفق</b><span>کل سفارش‌های پردازش و ارسال‌شده</span></div></div>
+      <div class="soft-panel activity-item"><span class="activity-dot" style="background:#ef4444"></span><div><b>{{ metrics.rejected_total }} سفارش ردشده</b><span>کل فیش‌ها یا سفارش‌های ردشده</span></div></div>
+      <div class="soft-panel activity-item"><span class="activity-dot" style="background:#38bdf8"></span><div><b>{{ metrics.orders_total }} سفارش ثبت‌شده</b><span>مجموع سفارش‌های فروشگاه</span></div></div>
+      <div class="soft-panel activity-item"><span class="activity-dot"></span><div><b>{{ metrics.approved_today }} تحویل امروز</b><span>{{ metrics.rejected_today }} سفارش نیز امروز رد شده است</span></div></div>
+    </div>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head"><div><h2>آخرین سفارش‌ها</h2><p>هشت سفارش ثبت‌شده اخیر</p></div><a href="{{ base }}/orders" class="btn btn-ghost btn-sm"><i data-lucide="list-filter"></i>مشاهده همه</a></div>
+  <div class="table-wrap"><table><thead><tr><th>کد پیگیری</th><th>مشتری</th><th>مبلغ</th><th>وضعیت</th></tr></thead><tbody>
+    {% for o in orders %}<tr><td><code>{{ o.tracking_code }}</code></td><td>{{ o.full_name or o.phone or '—' }}</td><td class="nowrap">{{ "{:,}".format(o.total) }} تومان</td><td><span class="badge {{ status_class.get(o.status, '') }}">{{ status_fa.get(o.status, o.status) }}</span></td></tr>
+    {% else %}<tr><td colspan="4" class="empty">هنوز سفارشی ثبت نشده.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    var canvas = document.getElementById('activity-chart');
+    if (!canvas || !window.Chart) return;
+    new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: {{ activity | map(attribute='day') | list | tojson }},
+        datasets: [
+          { label: 'تحویل‌شده', data: {{ activity | map(attribute='delivered') | list | tojson }}, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,.12)', fill: true, tension: .38 },
+          { label: 'ردشده', data: {{ activity | map(attribute='rejected') | list | tojson }}, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.08)', fill: true, tension: .38 }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Vazirmatn' } } } }, scales: { x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(148,163,184,.07)' } }, y: { beginAtZero: true, ticks: { color: '#64748b', precision: 0 }, grid: { color: 'rgba(148,163,184,.07)' } } } }
+    });
+  })();
+</script>
+{% endblock %}

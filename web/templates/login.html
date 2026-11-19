@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}ورود{% endblock %}
+{% block content %}
+<section class="login-page">
+  <div class="card glass login-panel">
+    <div class="login-head">
+      <img class="brand-logo" src="{{ base }}/static/guitarineh-logo.png" alt="لوگوی گیتارینه">
+      <h1>پنل مدیریت گیتارینه</h1>
+      <p>سفارش‌ها، محصولات و تنظیمات ربات در یک نمای امن</p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error"><i data-lucide="triangle-alert"></i><span>{{ error }}</span></div>
+    {% elif request.query_params.get('expired') %}
+    <div class="alert alert-info"><i data-lucide="info"></i><span>نشست شما پایان یافت. دوباره وارد شوید.</span></div>
+    {% endif %}
+
+    <form method="post" action="{{ base }}/login" class="form">
+      <div class="field"><label for="username">نام کاربری</label><input id="username" type="text" name="username" required autocomplete="username" autofocus></div>
+      <div class="field"><label for="password">رمز عبور</label><input id="password" type="password" name="password" required autocomplete="current-password"></div>
+      <button type="submit" class="btn btn-primary"><i data-lucide="log-in"></i>ورود به پنل</button>
+    </form>
+
+    <p class="login-foot">اتصال امن · ۵ تلاش ناموفق = ۱۵ دقیقه قفل</p>
+  </div>
+</section>
+{% endblock %}
